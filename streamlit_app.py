@@ -47,5 +47,5 @@ if session_state.response is not None:
         # st.write('You picked:', x)
         csv_download()
     else:
-        st.markdown("**Reload page to restart login process**)
+        st.markdown("**Reload page to restart login process**")
 
