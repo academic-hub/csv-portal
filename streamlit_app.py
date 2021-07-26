@@ -1,38 +1,50 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
 import streamlit as st
-
-"""
-# Welcome to Streamlit!
-
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
-
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
-
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+import SessionState
+import uuid
+import time
+import requests
+import urllib3
+from portal.csv_download import csv_download
 
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
+urllib3.disable_warnings()
 
-    Point = namedtuple('Point', 'x y')
-    data = []
+base_url = "https://data.academic.osisoft.com/auth"
 
-    points_per_turn = total_points / num_turns
+session_state = SessionState.get(session_id=str(uuid.uuid4()), response=None)  #
+st.write("[debug] session_id:", session_state.session_id)
 
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
+def rerun():
+    raise st.script_runner.RerunException(st.script_request_queue.RerunData(None))
 
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+@st.cache(ttl=300, max_entries=4)
+def get_token(previous_status):
+    resp = requests.get(f"{base_url}/token", headers={"hub-id": session_state.session_id}, verify=False)
+    # st.write(f"[{resp.status_code}]", resp.text)
+    session_state.response = resp
+    return resp
+
+
+if session_state.response is None or \
+        session_state.response.status_code == 400:
+    with st.form(key='login-form'):
+        st.markdown("**Academic Hub Login Required**")
+        step_info = "Step 1. Click here to initiate login sequence on new tab"
+        st.markdown(
+            f'<a href="{base_url}?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
+            unsafe_allow_html=True)
+        login_done = st.form_submit_button('Step2 . Click Login completed')
+
+        if login_done:
+            r = get_token(session_state.response.status_code if session_state.response else 400)
+            # session_state.response = r
+            st.write(f"[[{session_state.response.status_code}]]")
+            rerun()
+
+if session_state.response is not None:
+    if session_state.response.status_code == 200:
+        # x = st.slider('Pick a number')
+        # st.write('You picked:', x)
+        csv_download()
+    else:
+        st.markdown("**Reload page to restart login process**")
