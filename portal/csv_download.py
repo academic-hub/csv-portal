@@ -10,24 +10,23 @@ import time
 import base64
 
 
-
-def csv_download():
+def csv_download(collab_key):
     @st.cache(allow_output_mutation=True)
-    def hub_client():
-        hub_ocs = HubClient()
+    def hub_client(collab_key=collab_key):
+        hub_ocs = HubClient(collab_key=collab_key)
         hub_ocs.refresh_datasets(
-            # experimental=True,
+            experimental=True,
             # additional_status="eds_onboarding",
         )
         return hub_ocs
 
     @st.cache(show_spinner=False)
     def get_data_view(dataset, asset, start_time, end_time, interpolation):
-        # return hub.dataview_interpolated_pd(hub.namespace_of(dataset),
-        #                                    hub.asset_dataviews(filter='', asset=asset)[0],
-        #                                    start_time.isoformat(), end_time.isoformat(), interpolation)
-        return pd.DataFrame(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
-                            columns=['a', 'b', 'c'])
+        return hub.dataview_interpolated_pd(hub.namespace_of(dataset),
+                                           hub.asset_dataviews(filter='', asset=asset)[0],
+                                           start_time.isoformat(), end_time.isoformat(), interpolation)
+        # return pd.DataFrame(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+        #                    columns=['a', 'b', 'c'])
 
     def get_table_download_link_csv(df):
         csv = df.to_csv(index=False).encode()
@@ -90,4 +89,3 @@ def csv_download():
 
     hub = hub_client()
     download_csv(hub)
-

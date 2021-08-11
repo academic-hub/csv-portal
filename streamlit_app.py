@@ -1,5 +1,6 @@
 import streamlit as st
 import SessionState
+import json
 import uuid
 import time
 import requests
@@ -9,7 +10,10 @@ from portal.csv_download import csv_download
 
 urllib3.disable_warnings()
 
-base_url = "https://data.academic.osisoft.com/auth"
+auth_url = st.secrets["auth_url"]  
+auth0_roles_key = st.secrets["auth0_roles_key"]
+
+# auth_url = "http://127.0.0.1:3000/auth"
 
 session_state = SessionState.get(session_id=str(uuid.uuid4()), response=None)  #
 st.write("[debug] session_id:", session_state.session_id)
@@ -19,9 +23,14 @@ def rerun():
 
 @st.cache(ttl=300, max_entries=4)
 def get_token(previous_status):
-    resp = requests.get(f"{base_url}/token", headers={"hub-id": session_state.session_id}, verify=False)
+    resp = requests.get(f"{auth_url}/token", headers={"hub-id": session_state.session_id}, verify=False)
     # st.write(f"[{resp.status_code}]", resp.text)
     session_state.response = resp
+    # print(resp.text)
+    js = json.loads(resp.text)
+    roles = js[auth0_roles_key]
+    secret = [i for i in roles if "client-secret" in i][0].replace("client-secret:", "")  
+    session_state.collab_key = secret
     return resp
 
 
@@ -31,7 +40,7 @@ if session_state.response is None or \
         st.markdown("**Academic Hub Login Required**")
         step_info = "Step 1. Click here to initiate login sequence on new tab"
         st.markdown(
-            f'<a href="{base_url}?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
+            f'<a href="{auth_url}?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
             unsafe_allow_html=True)
         login_done = st.form_submit_button('Step2 . Click Login completed')
 
@@ -45,7 +54,7 @@ if session_state.response is not None:
     if session_state.response.status_code == 200:
         # x = st.slider('Pick a number')
         # st.write('You picked:', x)
-        csv_download()
+        csv_download(session_state.collab_key)
     else:
         st.markdown("**Reload page to restart login process**")
 
