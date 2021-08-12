@@ -5,6 +5,7 @@ import uuid
 import time
 import requests
 import urllib3
+import time
 from portal.csv_download import csv_download
 
 
@@ -16,7 +17,9 @@ auth0_roles_key = st.secrets["auth0_roles_key"]
 # auth_url = "http://127.0.0.1:3000/auth"
 
 session_state = SessionState.get(session_id=str(uuid.uuid4()), response=None)  #
-st.write("[debug] session_id:", session_state.session_id)
+# st.write("[debug] session_id:", session_state.session_id)
+st.markdown(f'<b>Hub CSV Portal <a href="https://academic.osisoft.com/datasets" target="_blank">(dataset documention here)</a></b>',
+                                                                               unsafe_allow_html=True)
 
 def rerun():
     raise st.script_runner.RerunException(st.script_request_queue.RerunData(None))
@@ -27,10 +30,12 @@ def get_token(previous_status):
     # st.write(f"[{resp.status_code}]", resp.text)
     session_state.response = resp
     # print(resp.text)
-    js = json.loads(resp.text)
-    roles = js[auth0_roles_key]
-    secret = [i for i in roles if "client-secret" in i][0].replace("client-secret:", "")  
-    session_state.collab_key = secret
+    if resp.status_code == 200:
+        js = json.loads(resp.text)
+        roles = js[auth0_roles_key]
+        secret = [i for i in roles if "client-secret" in i][0].replace("client-secret:", "")
+        session_state.collab_key = secret
+        session_state.roles = [j for j in roles if "client-" not in j]
     return resp
 
 
@@ -46,14 +51,13 @@ if session_state.response is None or \
 
         if login_done:
             r = get_token(session_state.response.status_code if session_state.response else 400)
-            # session_state.response = r
-            st.write(f"[[{session_state.response.status_code}]]")
+            if session_state.response.status_code != 200:
+                st.markdown(f"**Error ({session_state.response.status_code}): cannot login, make sure to use the correct academic hub account in Step 1.**")
+                time.sleep(5)
             rerun()
 
 if session_state.response is not None:
     if session_state.response.status_code == 200:
-        # x = st.slider('Pick a number')
-        # st.write('You picked:', x)
         csv_download(session_state.collab_key)
     else:
         st.markdown("**Reload page to restart login process**")
