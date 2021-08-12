@@ -27,15 +27,13 @@ def rerun():
 @st.cache(ttl=300, max_entries=4)
 def get_token(previous_status):
     resp = requests.get(f"{auth_url}/token", headers={"hub-id": session_state.session_id}, verify=False)
-    # st.write(f"[{resp.status_code}]", resp.text)
     session_state.response = resp
     # print(resp.text)
     if resp.status_code == 200:
         js = json.loads(resp.text)
         roles = js[auth0_roles_key]
-        secret = [i for i in roles if "client-secret" in i][0].replace("client-secret:", "")
-        session_state.collab_key = secret
-        session_state.roles = [j for j in roles if "client-" not in j]
+        session_state.collab_key = roles.get("client-secret", None)
+        session_state.roles = {j:roles[j] for j in roles if "client-" not in j}
     return resp
 
 
@@ -58,7 +56,10 @@ if session_state.response is None or \
 
 if session_state.response is not None:
     if session_state.response.status_code == 200:
-        csv_download(session_state.collab_key)
+        if session_state.collab_key and session_state.roles["csv_download"]:
+            csv_download(session_state.collab_key)
+        else:
+            st.markdown("**No application registered for user, please reload page to restart login process with another account**")
     else:
         st.markdown("**Reload page to restart login process**")
 
