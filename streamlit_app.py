@@ -13,8 +13,8 @@ urllib3.disable_warnings()
 
 auth_url = st.secrets["auth_url"]  
 auth0_roles_key = st.secrets["auth0_roles_key"]
+secret_read = st.secrets["secret_read"]
 
-# auth_url = "http://127.0.0.1:3000/auth"
 
 session_state = SessionState.get(session_id=str(uuid.uuid4()), response=None)  #
 # st.write("[debug] session_id:", session_state.session_id)
@@ -32,8 +32,8 @@ def get_token(previous_status):
     if resp.status_code == 200:
         js = json.loads(resp.text)
         roles = js[auth0_roles_key]
-        session_state.collab_key = roles.get("client-secret", None)
-        session_state.roles = {j:roles[j] for j in roles if "client-" not in j}
+        session_state.collab_key = secret_read
+        session_state.roles = roles
     return resp
 
 
@@ -56,7 +56,7 @@ if session_state.response is None or \
 
 if session_state.response is not None:
     if session_state.response.status_code == 200:
-        if session_state.collab_key and session_state.roles["csv_download"]:
+        if session_state.collab_key and "hub:read" in session_state.roles:
             csv_download(session_state.collab_key)
         else:
             st.markdown("**No application registered for user, please reload page to restart login process with another account**")
