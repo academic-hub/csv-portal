@@ -11,7 +11,7 @@ import base64
 
 
 def csv_download(collab_key):
-    @st.cache(allow_output_mutation=True)
+    @st.cache(allow_output_mutation=True, ttl=3600.0)
     def hub_client(collab_key=collab_key):
         hub_ocs = HubClient(collab_key=collab_key)
         hub_ocs.refresh_datasets(
