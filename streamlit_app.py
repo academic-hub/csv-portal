@@ -15,14 +15,19 @@ auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = st.secrets["secret_read"]
 
 hub_home = "https://academic.osisoft.com"
-datasets_link = f'<a href="{hub_home}/datasets" target="_blank">[dataset documentation]</a>'
+datasets_link = (
+    f'<a href="{hub_home}/datasets" target="_blank">[dataset documentation]</a>'
+)
 registration_link = f'<a href="{hub_home}/register" target="_blank">[register here]</a>'
 
-session_state = SessionState.get(session_id=str(uuid.uuid4()), response=None)  #
+session_state = SessionState.get(
+    session_id=str(uuid.uuid4()), response=None, df=None
+)  #
 # st.write("[debug] session_id:", session_state.session_id)
 st.markdown(
-    f'<b>Hub CSV Portal </b> {datasets_link} || {registration_link}',
-    unsafe_allow_html=True)
+    f"<b>Hub CSV Portal </b> {datasets_link} || {registration_link}",
+    unsafe_allow_html=True,
+)
 
 
 def rerun():
@@ -31,43 +36,49 @@ def rerun():
 
 @st.cache(ttl=300, max_entries=4)
 def get_token(previous_status):
-    resp = requests.get(f"{auth_url}/token", headers={"hub-id": session_state.session_id}, verify=False)
+    resp = requests.get(
+        f"{auth_url}/token", headers={"hub-id": session_state.session_id}, verify=False
+    )
     session_state.response = resp
     # print(resp.text)
     if resp.status_code == 200:
         js = json.loads(resp.text)
         roles = js[auth0_roles_key]
-        session_state.collab_key = secret_read
+        session_state.client_key = secret_read
         session_state.roles = roles
     return resp
 
 
-if session_state.response is None or \
-        session_state.response.status_code == 400:
-    with st.form(key='login-form'):
+if session_state.response is None or session_state.response.status_code == 400:
+    with st.form(key="login-form"):
         st.markdown("**Academic Hub Login Required**")
         step_info = "Step 1. Click here to initiate login sequence on new tab"
         st.markdown(
             f'<a href="{auth_url}?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
-            unsafe_allow_html=True)
-        login_done = st.form_submit_button('Step2 . Click Login completed')
+            unsafe_allow_html=True,
+        )
+        login_done = st.form_submit_button("Step2 . Click Login completed")
 
         if login_done:
-            r = get_token(session_state.response.status_code if session_state.response else 400)
+            r = get_token(
+                session_state.response.status_code if session_state.response else 400
+            )
             if session_state.response.status_code != 200:
                 st.markdown(
                     f"**Error ({session_state.response.status_code}): cannot login, make sure to use the correct "
-                    f"academic hub account in Step 1.**")
+                    f"academic hub account in Step 1.**"
+                )
                 time.sleep(5)
             rerun()
 
 if session_state.response is not None:
     if session_state.response.status_code == 200:
-        if session_state.collab_key and "hub:read" in session_state.roles:
-            csv_download(session_state.collab_key)
+        if session_state.client_key and "hub:read" in session_state.roles:
+            csv_download(session_state)
         else:
             st.markdown(
                 "**No application registered for user, please reload page to restart login process with another "
-                "account**")
+                "account**"
+            )
     else:
         st.markdown("**Reload page to restart login process**")
