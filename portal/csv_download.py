@@ -145,10 +145,9 @@ def csv_download(session_state):
                     )
                     df.to_csv(str(DOWNLOADS_PATH / f"{data_file}"), index=False)
                     link = f"Download from [this link](downloads/{data_file})"
-                    st.markdown(link)
+                    st.markdown(link, unsafe_allow_html=True)
                 else:
                     st.markdown(f"** No data to download (try another time range)**")
-            # st.markdown(get_table_download_link_csv(df), unsafe_allow_html=True)
 
         st.markdown("**Data frame preview:**")
         with st.spinner(text=f"Preparing preview..."):
