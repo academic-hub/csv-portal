@@ -10,6 +10,7 @@ from portal.csv_download import csv_download
 
 urllib3.disable_warnings()
 
+__version__ = 0.8.1
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = st.secrets["secret_read"]
@@ -25,7 +26,7 @@ session_state = SessionState.get(
 )  #
 # st.write("[debug] session_id:", session_state.session_id)
 st.markdown(
-    f"<b>Hub CSV Portal (v0.8)</b> {datasets_link} || {registration_link}",
+    f"<b>Hub CSV Portal ({__version__})</b> {datasets_link} || {registration_link}",
     unsafe_allow_html=True,
 )
 
