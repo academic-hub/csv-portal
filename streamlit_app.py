@@ -25,7 +25,7 @@ session_state = SessionState.get(
 )  #
 # st.write("[debug] session_id:", session_state.session_id)
 st.markdown(
-    f"<b>Hub CSV Portal </b> {datasets_link} || {registration_link}",
+    f"<b>Hub CSV Portal (v0.8)</b> {datasets_link} || {registration_link}",
     unsafe_allow_html=True,
 )
 
