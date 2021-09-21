@@ -10,7 +10,7 @@ from portal.csv_download import csv_download
 
 urllib3.disable_warnings()
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = st.secrets["secret_read"]
@@ -25,6 +25,7 @@ session_state = SessionState.get(
     session_id=str(uuid.uuid4()), response=None, df=None
 )  #
 # st.write("[debug] session_id:", session_state.session_id)
+st.image("https://academichub.blob.core.windows.net/images/aveva-banner.png", width=700)
 st.markdown(
     f"<b>Hub CSV Portal ({__version__})</b> {datasets_link} || {registration_link}",
     unsafe_allow_html=True,
