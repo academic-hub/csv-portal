@@ -50,7 +50,7 @@ def csv_download(session_state):
 
             dataset = st.selectbox(
                 "Step 1: Select dataset",
-                hub.datasets(),
+                hub.datasets(first="Classroom_Data"),
                 help="Check datasets info at https://academic.osisoft.com/datasets",
             )
             st.form_submit_button(label="Submit")
