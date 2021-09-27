@@ -91,7 +91,7 @@ def csv_download(session_state):
                 "default",
                 "Interpolation interval with format HH:MM:SS",
             )
-            csv_button = st.form_submit_button(label="Final step: Click for CSV")
+            csv_button = st.form_submit_button(label="Final step: Click to generate CSV file")
 
         start_time = parse(start)
         delta = datetime.timedelta(seconds=pytimeparse.parse(window))
@@ -180,7 +180,8 @@ def csv_download(session_state):
 #                                title=title,
 #                            ).update_traces(mode="lines+markers")
 #                        )
-            st.success("Done!")
+            if len(session_state.df) > 0:
+                st.success("Done!")
 
     hub = hub_client(session_state.client_key)
     download_csv(hub)

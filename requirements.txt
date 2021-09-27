@@ -1,5 +1,5 @@
 requests==2.26.0
-streamlit==0.88.0
+streamlit==0.89.0
 plotly==5.3.1
 numpy==1.21.1
 urllib3==1.26.6
