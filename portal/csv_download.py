@@ -10,7 +10,7 @@ STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
 DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
 if not DOWNLOADS_PATH.is_dir():
     DOWNLOADS_PATH.mkdir()
-
+MAX_STORED_ROWS = 500*1000
 
 def csv_download(session_state):
     @st.cache(allow_output_mutation=True, ttl=3600.0)
@@ -42,6 +42,7 @@ def csv_download(session_state):
             start_time.isoformat(),
             end_time.isoformat(),
             resume=True if resume else False,
+            max_rows=MAX_STORED_ROWS,
         )
 
     def download_csv(hub):
@@ -78,7 +79,8 @@ def csv_download(session_state):
                 "window-time",
                 "default",
                 "CSV results will end at start time + this time window, supported format "
-                + "https://github.com/wroberts/pytimeparse#pytimeparse-time-expression-parser",
+                + "https://github.com/wroberts/pytimeparse#pytimeparse-time-expression-parser \n"
+                + f"**WARNING:** stored data view maximum of rows is {MAX_STORED_ROWS}",
             )
             dataview_kind = st.radio(
                 "Step 5: Select data view kind", ("Interpolated", "Stored")
@@ -144,8 +146,9 @@ def csv_download(session_state):
                         + suffix
                     )
                     df.to_csv(str(DOWNLOADS_PATH / f"{data_file}"), index=False)
-                    link = f"Download from [this link](downloads/{data_file})"
-                    st.markdown(link, unsafe_allow_html=True)
+                    session_state.data_file = data_file
+                    # link = f"Download from [this link](downloads/{data_file})"
+                    # st.markdown(link, unsafe_allow_html=True)
                 else:
                     st.markdown(f"** No data to download (try another time range)**")
 
@@ -180,8 +183,21 @@ def csv_download(session_state):
 #                                title=title,
 #                            ).update_traces(mode="lines+markers")
 #                        )
-            if len(session_state.df) > 0:
-                st.success("Done!")
+            if session_state.df is not None and len(session_state.df) > 0:
+                import streamlit.components.v1 as components
+
+                # bootstrap 4 button
+                components.html(
+                    f"""
+                    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+                    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+                   
+                   <a href="downloads/{session_state.data_file}" class="btn btn-primary active" width="100%" role="button">Download CSV</a>
+                    """,
+                    height=38,
+                    width=131,
+                )
 
     hub = hub_client(session_state.client_key)
     download_csv(hub)
