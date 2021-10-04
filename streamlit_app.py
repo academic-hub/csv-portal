@@ -19,7 +19,7 @@ datasets_link = (
     f'<a href="{hub_home}/datasets" target="_blank">[dataset documentation]</a>'
 )
 registration_link = f'<a href="{hub_home}/register" target="_blank">[register here]</a>'
-portal_link = f'<a href="{hub_home}">[back to hub portal]</a>'
+portal_link = f'<a href="{hub_home}" target="_blank">[back to hub portal]</a>'
 
 session_state = SessionState.get(
     session_id=str(uuid.uuid4()), response=None, df=None
