@@ -4,13 +4,15 @@ import datetime
 import pytimeparse
 from dateutil.parser import parse
 from ocs_academic_hub import HubClient
-import pathlib
 
-STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / "static"
-DOWNLOADS_PATH = STREAMLIT_STATIC_PATH / "downloads"
-if not DOWNLOADS_PATH.is_dir():
-    DOWNLOADS_PATH.mkdir()
 MAX_STORED_ROWS = 500*1000
+
+
+@st.cache
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv().encode('utf-8')
+
 
 def csv_download(session_state):
     @st.cache(allow_output_mutation=True, ttl=3600.0)
@@ -18,7 +20,6 @@ def csv_download(session_state):
         hub_ocs = HubClient(client_key=client_key)
         hub_ocs.refresh_datasets(
             experimental=True,
-            # additional_status="eds_onboarding",
         )
         return hub_ocs
 
@@ -110,16 +111,16 @@ def csv_download(session_state):
         if dataview_kind == "Interpolated":
             st.write("Interpolation interval (HH:MM:SS):", interpolation)
         st.write(
-            "OCS namespace:",
+            "Namespace:",
             hub.namespace_of(dataset),
             "||",
-            "Default data view ID:",
+            "Data view ID:",
             hub.asset_dataviews(filter="", asset=asset)[0],
         )
 
         if csv_button:
             with st.spinner(
-                text=f"Getting {dataview_kind.lower()} CSV from OCS Data View... (can take some time)"
+                text=f"Getting {dataview_kind.lower()} CSV from Data View... (can take some time)"
             ):
                 if dataview_kind == "Interpolated":
                     df = get_interpolated_data_view(
@@ -133,7 +134,7 @@ def csv_download(session_state):
 
             st.success(f"Data View Request Complete!! (number of rows: {len(df)})")
             if hub.remaining_data():
-                st.warning("**WARNING: download link is missing data: try a small time range**")
+                st.warning("**WARNING: download link is missing data: try a smaller time range**")
             with st.spinner(text="Preparing for download..."):
                 if len(df) > 0:
                     suffix = f"{'-stored' if dataview_kind == 'Stored' else ''}.csv"
@@ -145,10 +146,7 @@ def csv_download(session_state):
                         + end_time.isoformat().replace(":", "_")
                         + suffix
                     )
-                    df.to_csv(str(DOWNLOADS_PATH / f"{data_file}"), index=False)
                     session_state.data_file = data_file
-                    # link = f"Download from [this link](downloads/{data_file})"
-                    # st.markdown(link, unsafe_allow_html=True)
                 else:
                     st.markdown(f"** No data to download (try another time range)**")
 
@@ -157,46 +155,17 @@ def csv_download(session_state):
             try:
                 st.write(session_state.df)
             except:
-                st.warning("**Unable to generate preview (download link is valid)**")
+                st.warning("**Unable to generate preview (download link is still valid)**")
 
-#        with st.form(key="plot"):
-#            plot_button = st.form_submit_button(
-#                label="(Optional step) Click here for plot"
-#            )
-#            if plot_button:
-#                st.write("Data line plot:")
-#                with st.spinner(
-#                    text="Plotting data... (can take some time with big data frame)"
-#                ):
-#                    df = session_state.df
-#                    columns = list(df.select_dtypes(include="number").columns)
-#                    if dataview_kind == "Interpolated":
-#                        st.write(px.line(df, x="Timestamp", y=columns))
-#                    else:
-#                        title = f"Time-series scatter+line plot for asset {asset} of dataset {dataset} on Academic Hub"
-#                        st.write(
-#                            px.scatter(
-#                                df,
-#                                x=df["Timestamp"],
-#                                y=df["Value"],
-#                                color=df["Field"],
-#                                title=title,
-#                            ).update_traces(mode="lines+markers")
-#                        )
             if session_state.df is not None and len(session_state.df) > 0:
-                import streamlit.components.v1 as components
+                csv = convert_df(session_state.df)
 
-                # bootstrap 4 button
-                components.html(
-                    f"""
-                    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-                    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-                    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-                   
-                   <a href="downloads/{session_state.data_file}" class="btn btn-primary active" width="100%" role="button">Download CSV</a>
-                    """,
-                    height=38,
-                    width=131,
+                st.download_button(
+                    label="**Download data as CSV**",
+                    data=csv,
+                    file_name=f"{session_state.data_file}",
+                    mime='text/csv',
+                    help="Click this link to get a copy of the data frame as a CSV file",
                 )
 
     hub = hub_client(session_state.client_key)
