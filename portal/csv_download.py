@@ -4,6 +4,7 @@ import datetime
 import pytimeparse
 from dateutil.parser import parse
 from ocs_academic_hub import HubClient
+import pandas as pd
 
 MAX_STORED_ROWS = 500*1000
 
@@ -130,7 +131,7 @@ def csv_download(session_state):
                     df = get_stored_data_view(
                         hub, dataset, asset, start_time, end_time, resume=0
                     )
-                session_state.df = df
+                session_state.df = df.set_index("Timestamp")
 
             st.success(f"Data View Request Complete!! (number of rows: {len(df)})")
             if hub.remaining_data():
@@ -151,14 +152,35 @@ def csv_download(session_state):
                     st.markdown(f"** No data to download (try another time range)**")
 
         st.markdown("**Data frame preview:**")
+        pivot = False
+        asset_meta = False
+        df = None
+        if dataview_kind != "Interpolated":
+            pivot = st.checkbox("Pivot table",
+                                help="Switch from narrow CSV to wide format (Field values become columns)")
+            asset_meta = st.checkbox("Add asset metadata",
+                                     help="Add asset metadata to CSV - REQUIRES PIVOT")
         with st.spinner(text=f"Preparing preview..."):
+            if pivot:
+                session_state.df_pivot = session_state.df.pivot_table(values='Value', index='Timestamp', columns='Field')
+                if asset_meta:
+                    session_state.df_meta = pd.DataFrame(hub.asset_metadata(asset=asset),
+                                                         index=session_state.df_pivot.index)
+                    session_state.df_pivot_meta = session_state.df_pivot.merge(session_state.df_meta, on='Timestamp')
+                    df = session_state.df_pivot_meta
+                else:
+                    df = session_state.df_pivot
+            else:
+                df = session_state.df
             try:
-                st.write(session_state.df)
+                if df is not None:
+                    st.markdown(f"number of (columns, rows) = ({len(df.columns) + 1}, {len(df)})")
+                    st.write(df)
             except:
                 st.warning("**Unable to generate preview (download link is still valid)**")
 
             if session_state.df is not None and len(session_state.df) > 0:
-                csv = convert_df(session_state.df)
+                csv = convert_df(df)
 
                 st.download_button(
                     label="**Download data as CSV**",
