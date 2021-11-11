@@ -1,6 +1,7 @@
-# Welcome to Streamlit!
+# Welcome to Hub Data Portal 
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/academic-hub/csv-portal)
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+**NOTE: an Academic Hub account is required to use this application: https://academic.osisoft.com/register**
+
+![image](https://user-images.githubusercontent.com/25752437/141306053-45bbcce6-7f8f-4a0c-bc9e-08f760ed3126.png)
