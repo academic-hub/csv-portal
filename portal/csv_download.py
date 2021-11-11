@@ -97,29 +97,39 @@ def csv_download(session_state):
             )
             csv_button = st.form_submit_button(label="Final step: Click to generate CSV file")
 
-        start_time = parse(start)
-        delta = datetime.timedelta(seconds=pytimeparse.parse(window))
-        end_time = start_time + delta
+        start_time = end_time = None
+        try:
+            start_time = parse(start)
+        except ValueError:
+            st.warning("#### Invalid start time, "
+                       "please consult https://en.wikipedia.org/wiki/ISO_8601")
+        try:
+            delta = datetime.timedelta(seconds=pytimeparse.parse(window))
+            end_time = start_time + delta
+        except TypeError:
+            st.warning("#### Invalid time window, "
+                       "please consult https://github.com/wroberts/pytimeparse#pytimeparse-time-expression-parser")
 
-        st.write("Current dataset: ", dataset, " || Selected asset:", asset)
-        st.write(
-            "Start time:",
-            start_time.isoformat(),
-            "||",
-            "End time :",
-            end_time.isoformat(),
-        )
-        if dataview_kind == "Interpolated":
-            st.write("Interpolation interval (HH:MM:SS):", interpolation)
-        st.write(
-            "Namespace:",
-            hub.namespace_of(dataset),
-            "||",
-            "Data view ID:",
-            hub.asset_dataviews(filter="", asset=asset)[0],
-        )
+        if start_time and end_time:
+            st.write("Current dataset: ", dataset, " || Selected asset:", asset)
+            st.write(
+                "Start time:",
+                start_time.isoformat(),
+                "||",
+                "End time :",
+                end_time.isoformat(),
+            )
+            if dataview_kind == "Interpolated":
+                st.write("Interpolation interval (HH:MM:SS):", interpolation)
+            st.write(
+                "Namespace:",
+                hub.namespace_of(dataset),
+                "||",
+                "Data view ID:",
+                hub.asset_dataviews(filter="", asset=asset)[0],
+            )
 
-        if csv_button:
+        if csv_button and start_time and end_time:
             with st.spinner(
                 text=f"Getting {dataview_kind.lower()} CSV from Data View... (can take some time)"
             ):
@@ -131,9 +141,11 @@ def csv_download(session_state):
                     df = get_stored_data_view(
                         hub, dataset, asset, start_time, end_time, resume=0
                     )
-                session_state.df = df.set_index("Timestamp")
-
-            st.success(f"Data View Request Complete!! (number of rows: {len(df)})")
+                if len(df) > 0:
+                    session_state.df = df.set_index("Timestamp")
+                    st.success(f"Data View Request Complete!! (number of rows: {len(df)})")
+                else:
+                    st.warning(f"Data View is empty - please try with another time range")
             if hub.remaining_data():
                 st.warning("**WARNING: download link is missing data: try a smaller time range**")
             with st.spinner(text="Preparing for download..."):
@@ -172,10 +184,11 @@ def csv_download(session_state):
                     df = session_state.df_pivot
             else:
                 df = session_state.df
+            st.write(df)
             try:
                 if df is not None:
                     st.markdown(f"number of (columns, rows) = ({len(df.columns) + 1}, {len(df)})")
-                    st.write(df)
+                    # st.write(df)
             except:
                 st.warning("**Unable to generate preview (download link is still valid)**")
 
