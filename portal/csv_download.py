@@ -113,6 +113,13 @@ def csv_download(session_state):
         if start_time and end_time:
             st.write("Current dataset: ", dataset, " || Selected asset:", asset)
             st.write(
+                "Namespace:",
+                hub.namespace_of(dataset),
+                "||",
+                "Data view ID:",
+                hub.asset_dataviews(filter="", asset=asset)[0],
+            )
+            st.write(
                 "Start time:",
                 start_time.isoformat(),
                 "||",
@@ -121,13 +128,6 @@ def csv_download(session_state):
             )
             if dataview_kind == "Interpolated":
                 st.write("Interpolation interval (HH:MM:SS):", interpolation)
-            st.write(
-                "Namespace:",
-                hub.namespace_of(dataset),
-                "||",
-                "Data view ID:",
-                hub.asset_dataviews(filter="", asset=asset)[0],
-            )
 
         if csv_button and start_time and end_time:
             with st.spinner(
@@ -184,11 +184,10 @@ def csv_download(session_state):
                     df = session_state.df_pivot
             else:
                 df = session_state.df
-            st.write(df)
             try:
                 if df is not None:
                     st.markdown(f"number of (columns, rows) = ({len(df.columns) + 1}, {len(df)})")
-                    # st.write(df)
+                    st.write(df)
             except:
                 st.warning("**Unable to generate preview (download link is still valid)**")
 
