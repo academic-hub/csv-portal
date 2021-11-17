@@ -6,7 +6,7 @@ from dateutil.parser import parse
 from ocs_academic_hub import HubClient
 import pandas as pd
 
-MAX_STORED_ROWS = 500*1000
+MAX_STORED_ROWS = 500 * 1000
 
 
 @st.cache
@@ -26,7 +26,7 @@ def csv_download(session_state):
 
     @st.cache(show_spinner=False)
     def get_interpolated_data_view(
-        hub, dataset, asset, start_time, end_time, interpolation
+            hub, dataset, asset, start_time, end_time, interpolation
     ):
         return hub.dataview_interpolated_pd(
             hub.namespace_of(dataset),
@@ -111,27 +111,18 @@ def csv_download(session_state):
                        "please consult https://github.com/wroberts/pytimeparse#pytimeparse-time-expression-parser")
 
         if start_time and end_time:
-            st.write("Current dataset: ", dataset, " || Selected asset:", asset)
-            st.write(
-                "Namespace:",
-                hub.namespace_of(dataset),
-                "||",
-                "Data view ID:",
-                hub.asset_dataviews(filter="", asset=asset)[0],
-            )
-            st.write(
-                "Start time:",
-                start_time.isoformat(),
-                "||",
-                "End time :",
-                end_time.isoformat(),
-            )
-            if dataview_kind == "Interpolated":
-                st.write("Interpolation interval (HH:MM:SS):", interpolation)
+            interpolation_info = f"<br>Interpolation interval (HH:MM:SS): {interpolation}" \
+                        if dataview_kind == "Interpolated" else ""
+            dataview_info = f"""
+Current dataset: {dataset} || Selected asset: {asset}<br>
+Namespace: {hub.namespace_of(dataset)} || Data view ID: {hub.asset_dataviews(filter="", asset=asset)[0]} ({dataview_kind.lower()})<br> 
+Start time: {start_time.isoformat()} || End time: {end_time.isoformat()}{interpolation_info}
+"""
+            st.markdown(dataview_info, unsafe_allow_html=True)
 
         if csv_button and start_time and end_time:
             with st.spinner(
-                text=f"Getting {dataview_kind.lower()} CSV from Data View... (can take some time)"
+                    text=f"Getting {dataview_kind.lower()} CSV from Data View... (can take some time)"
             ):
                 if dataview_kind == "Interpolated":
                     df = get_interpolated_data_view(
@@ -146,18 +137,16 @@ def csv_download(session_state):
                     st.success(f"Data View Request Complete!! (number of rows: {len(df)})")
                 else:
                     st.warning(f"Data View is empty - please try with another time range")
-            if hub.remaining_data():
-                st.warning("**WARNING: download link is missing data: try a smaller time range**")
             with st.spinner(text="Preparing for download..."):
                 if len(df) > 0:
                     suffix = f"{'-stored' if dataview_kind == 'Stored' else ''}.csv"
                     data_file = (
-                        asset
-                        + "-"
-                        + start_time.isoformat().replace(":", "_")
-                        + "-"
-                        + end_time.isoformat().replace(":", "_")
-                        + suffix
+                            asset
+                            + "-"
+                            + start_time.isoformat().replace(":", "_")
+                            + "-"
+                            + end_time.isoformat().replace(":", "_")
+                            + suffix
                     )
                     session_state.data_file = data_file
                 else:
@@ -174,7 +163,8 @@ def csv_download(session_state):
                                      help="Add asset metadata to CSV - REQUIRES PIVOT")
         with st.spinner(text=f"Preparing preview..."):
             if pivot:
-                session_state.df_pivot = session_state.df.pivot_table(values='Value', index='Timestamp', columns='Field')
+                session_state.df_pivot = session_state.df.pivot_table(values='Value', index='Timestamp',
+                                                                      columns='Field')
                 if asset_meta:
                     session_state.df_meta = pd.DataFrame(hub.asset_metadata(asset=asset),
                                                          index=session_state.df_pivot.index)
@@ -192,8 +182,12 @@ def csv_download(session_state):
                 st.warning("**Unable to generate preview (download link is still valid)**")
 
             if session_state.df is not None and len(session_state.df) > 0:
+                if hub.remaining_data():
+                    st.markdown(
+                        '<p style="color:red;font-size:32px"><strong>Download link below is missing data: try a '
+                        'smaller time range</strong></p>',
+                        unsafe_allow_html=True)
                 csv = convert_df(df)
-
                 st.download_button(
                     label="**Download data as CSV**",
                     data=csv,
