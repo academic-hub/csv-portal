@@ -6,6 +6,9 @@ from dateutil.parser import parse
 from ocs_academic_hub import HubClient
 import pandas as pd
 
+dataset_time_range = dict(Classroom_Data="Feb 2018 - Dec 2019", Brewery="Jan 2017 - May 2020", MIT="July 2021 - now",
+                          Pilot_Plant="Oct 2020 - now", USC_Well_Data="July 2011 - Jan 2020 (one event per month)",
+                          Wind_Farms="Jan 2018 - Dec 2019")
 MAX_STORED_ROWS = 500 * 1000
 
 
@@ -60,6 +63,7 @@ def csv_download(session_state):
 
         with st.form(key="asset-dv"):
             hub.set_dataset(dataset)
+            st.markdown(f"**Dataset time range: {dataset_time_range[dataset]}**")
             asset = st.selectbox(
                 "Step 2: Select asset",
                 hub.assets()["Asset_Id"],

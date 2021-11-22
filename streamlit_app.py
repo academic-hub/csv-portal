@@ -9,7 +9,7 @@ from portal.csv_download import csv_download
 
 urllib3.disable_warnings()
 
-__version__ = "0.8.13"
+__version__ = "0.8.14"
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = st.secrets["secret_read"]
@@ -20,6 +20,7 @@ datasets_link = (
 )
 registration_link = f'<a href="{hub_home}/register" target="_blank">[register here]</a>'
 portal_link = f'<a href="{hub_home}" target="_blank">[back to hub portal]</a>'
+
 
 session_state = SessionState.get(
     session_id=str(uuid.uuid4()), response=None, df=None
