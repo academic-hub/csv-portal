@@ -184,8 +184,8 @@ Start time: {start_time.isoformat()} || End time: {end_time.isoformat()}{interpo
             if session_state.df is not None and len(session_state.df) > 0:
                 if hub.remaining_data():
                     st.markdown(
-                        '<p style="color:red;font-size:32px"><strong>Download link below is missing data: try a '
-                        'smaller time range</strong></p>',
+                        '<p style="color:red;font-size:24px"><strong>The time range you requested contained too many '
+                        'rows to download (>500,000 rows). Please select a shorter time range.</strong></p>',
                         unsafe_allow_html=True)
                 csv = convert_df(df)
                 st.download_button(
