@@ -9,10 +9,11 @@ from portal.csv_download import csv_download
 
 urllib3.disable_warnings()
 
-__version__ = "0.8.14"
+
+__version__ = "0.9.1"
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
-secret_read = st.secrets["secret_read"]
+secret_read = "na"  # st.secrets["secret_read"]
 
 hub_home = "https://academic.osisoft.com"
 datasets_link = (
@@ -23,7 +24,7 @@ portal_link = f'<a href="{hub_home}" target="_blank">[back to hub portal]</a>'
 
 
 session_state = SessionState.get(
-    session_id=str(uuid.uuid4()), response=None, df=None
+    session_id=str(uuid.uuid4()), response=None, df=None, jwt={"access_token": "none"}
 )  #
 # st.write("[debug] session_id:", session_state.session_id)
 st.image("https://academichub.blob.core.windows.net/images/aveva-banner.png", width=700)
@@ -44,11 +45,18 @@ def get_token(previous_status):
     )
     session_state.response = resp
     # print(resp.text)
-    if resp.status_code == 200:
+    if 200 == resp.status_code:
         js = json.loads(resp.text)
         roles = js[auth0_roles_key]
         session_state.client_key = secret_read
         session_state.roles = roles
+        jwt_resp = requests.get(
+            f"{auth_url}/token?jwt=1",
+            headers={"hub-id": session_state.session_id},
+            verify=False,
+        )
+        if 200 == jwt_resp.status_code:
+            session_state.jwt = jwt_resp.text
     return resp
 
 
@@ -76,7 +84,7 @@ if session_state.response is None or session_state.response.status_code == 400:
 
 if session_state.response is not None:
     if session_state.response.status_code == 200:
-        if session_state.client_key and "hub:read" in session_state.roles:
+        if "hub:read" in session_state.roles:
             csv_download(session_state)
         else:
             st.markdown(
