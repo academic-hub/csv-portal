@@ -10,7 +10,7 @@ from portal.csv_download import csv_download
 urllib3.disable_warnings()
 
 
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = "na"  # st.secrets["secret_read"]
@@ -65,7 +65,7 @@ if session_state.response is None or session_state.response.status_code == 400:
         st.markdown("**Academic Hub Login Required**")
         step_info = "Step 1. Click here to initiate login sequence on new tab"
         st.markdown(
-            f'<a href="{auth_url}?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
+            f'<a href="{auth_url}/login?hub-id={session_state.session_id}" target="_blank">{step_info}</a>',
             unsafe_allow_html=True,
         )
         login_done = st.form_submit_button("Step2 . Click Login completed")
