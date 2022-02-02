@@ -14,6 +14,7 @@ dataset_time_range = dict(
     Pilot_Plant="Oct 2020 - now",
     USC_Well_Data="July 2011 - Jan 2020 (one event per month)",
     Wind_Farms="Jan 2018 - Dec 2019",
+    Campus_Energy="Jan 2017 - Jan 2020",
 )
 MAX_STORED_ROWS = 500 * 1000
 
