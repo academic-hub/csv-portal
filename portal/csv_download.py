@@ -150,6 +150,11 @@ Start time: {start_time.isoformat()} || End time: {end_time.isoformat()}{interpo
                     df = get_stored_data_view(
                         hub, dataset, asset, start_time, end_time, resume=0
                     )
+                if df is None:
+                    st.warning(
+                        f"No stored data view for this asset - only interpolated, please change settings"
+                    )
+                    return
                 if len(df) > 0:
                     session_state.df = df.set_index("Timestamp")
                     st.success(
