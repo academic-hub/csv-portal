@@ -18,6 +18,7 @@ dataset_time_range = dict(
 )
 MAX_STORED_ROWS = 500 * 1000
 
+academic_hub_gw = st.secrets["academic_hub_gw"]
 
 @st.cache
 def convert_df(df):
@@ -29,7 +30,7 @@ def csv_download(session_state):
     @st.cache(allow_output_mutation=True, ttl=3600.0)
     def hub_client(session_st):
         # st.write(f"jwt= {session_st.jwt}")
-        new_hub = hub_connect(eval(session_st.jwt), st.secrets["academic_hub_gw"])
+        new_hub = hub_connect(eval(session_st.jwt), academic_hub_gw)
         return new_hub
 
     @st.cache(show_spinner=False)
