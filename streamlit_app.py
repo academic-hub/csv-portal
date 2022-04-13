@@ -10,7 +10,7 @@ from portal.csv_download import csv_download
 urllib3.disable_warnings()
 
 
-__version__ = "0.9.3"
+__version__ = "1.0.0"
 auth_url = st.secrets["auth_url"]
 auth0_roles_key = st.secrets["auth0_roles_key"]
 secret_read = "na"  # st.secrets["secret_read"]
